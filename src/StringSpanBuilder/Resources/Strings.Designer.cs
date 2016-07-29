@@ -103,5 +103,23 @@ namespace Spans.Text.StringSpanBuilder.Resources {
                 return ResourceManager.GetString("ArgumentOutOfRange_NegativeLength", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Index (zero based) must be greater than or equal to zero and less than the size of the argument list..
+        /// </summary>
+        public static string Format_IndexOutOfRange {
+            get {
+                return ResourceManager.GetString("Format_IndexOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Input string was not in a correct format..
+        /// </summary>
+        public static string Format_InvalidString {
+            get {
+                return ResourceManager.GetString("Format_InvalidString", resourceCulture);
+            }
+        }
     }
 }

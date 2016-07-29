@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Xunit;
 
 namespace Spans.Text.StringSpanBuilder.Tests
@@ -122,6 +123,192 @@ namespace Spans.Text.StringSpanBuilder.Tests
 
             Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Append("hello", 5, 1)); // Start index + count > value.Length
             Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Append("hello", 4, 2)); // Start index + count > value.Length
+        }
+
+        public static IEnumerable<object[]> AppendFormat_TestData()
+        {
+            yield return new object[] { "", null, "", new object[0], "" };
+            yield return new object[] { "", null, ", ", new object[0], ", " };
+
+            yield return new object[] { "Hello", null, ", Foo {0  }", new object[] { "Bar" }, "Hello, Foo Bar" }; // Ignores whitespace
+
+            yield return new object[] { "Hello", null, ", Foo {0}", new object[] { "Bar" }, "Hello, Foo Bar" };
+            yield return new object[] { "Hello", null, ", Foo {0} Baz {1}", new object[] { "Bar", "Foo" }, "Hello, Foo Bar Baz Foo" };
+            yield return new object[] { "Hello", null, ", Foo {0} Baz {1} Bar {2}", new object[] { "Bar", "Foo", "Baz" }, "Hello, Foo Bar Baz Foo Bar Baz" };
+            yield return new object[] { "Hello", null, ", Foo {0} Baz {1} Bar {2} Foo {3}", new object[] { "Bar", "Foo", "Baz", "Bar" }, "Hello, Foo Bar Baz Foo Bar Baz Foo Bar" };
+
+            // Length is positive
+            yield return new object[] { "Hello", null, ", Foo {0,2}", new object[] { "Bar" }, "Hello, Foo Bar" }; // MiValue's length > minimum length (so don't prepend whitespace)
+            yield return new object[] { "Hello", null, ", Foo {0,3}", new object[] { "B" }, "Hello, Foo   B" }; // Value's length < minimum length (so prepend whitespace)            
+            yield return new object[] { "Hello", null, ", Foo {0,     3}", new object[] { "B" }, "Hello, Foo   B" }; // Same as above, but verify AppendFormat ignores whitespace
+            yield return new object[] { "Hello", null, ", Foo {0,0}", new object[] { "Bar" }, "Hello, Foo Bar" }; // Minimum length is 0
+
+            // Length is negative
+            yield return new object[] { "Hello", null, ", Foo {0,-2}", new object[] { "Bar" }, "Hello, Foo Bar" }; // Value's length > |minimum length| (so don't prepend whitespace)
+            yield return new object[] { "Hello", null, ", Foo {0,-3}", new object[] { "B" }, "Hello, Foo B  " }; // Value's length < |minimum length| (so append whitespace)
+            yield return new object[] { "Hello", null, ", Foo {0,     -3}", new object[] { "B" }, "Hello, Foo B  " }; // Same as above, but verify AppendFormat ignores whitespace
+            yield return new object[] { "Hello", null, ", Foo {0,0}", new object[] { "Bar" }, "Hello, Foo Bar" }; // Minimum length is 0
+
+            yield return new object[] { "Hello", null, ", Foo {0:D6}", new object[] { 1 }, "Hello, Foo 000001" }; // Custom format
+            yield return new object[] { "Hello", null, ", Foo {0     :D6}", new object[] { 1 }, "Hello, Foo 000001" }; // Custom format with ignored whitespace
+            yield return new object[] { "Hello", null, ", Foo {0:}", new object[] { 1 }, "Hello, Foo 1" }; // Missing custom format
+
+            yield return new object[] { "Hello", null, ", Foo {0,9:D6}", new object[] { 1 }, "Hello, Foo    000001" }; // Positive minimum length and custom format
+            yield return new object[] { "Hello", null, ", Foo {0,-9:D6}", new object[] { 1 }, "Hello, Foo 000001   " }; // Negative length and custom format
+
+            yield return new object[] { "Hello", null, ", Foo {0:{{X}}Y{{Z}}} {0:X{{Y}}Z}", new object[] { 1 }, "Hello, Foo {X}Y{Z} X{Y}Z" }; // Custom format (with escaped curly braces)
+            yield return new object[] { "Hello", null, ", Foo {{{0}", new object[] { 1 }, "Hello, Foo {1" }; // Escaped open curly braces
+            yield return new object[] { "Hello", null, ", Foo }}{0}", new object[] { 1 }, "Hello, Foo }1" }; // Escaped closed curly braces
+            yield return new object[] { "Hello", null, ", Foo {0} {{0}}", new object[] { 1 }, "Hello, Foo 1 {0}" }; // Escaped placeholder
+
+
+            yield return new object[] { "Hello", null, ", Foo {0}", new object[] { null }, "Hello, Foo " }; // Values has null only
+            yield return new object[] { "Hello", null, ", Foo {0} {1} {2}", new object[] { "Bar", null, "Baz" }, "Hello, Foo Bar  Baz" }; // Values has null
+
+            yield return new object[] { "Hello", CultureInfo.InvariantCulture, ", Foo {0,9:D6}", new object[] { 1 }, "Hello, Foo    000001" }; // Positive minimum length, custom format and custom format provider
+
+            yield return new object[] { "", new CustomFormatter(), "{0}", new object[] { 1.2 }, "abc" }; // Custom format provider
+            yield return new object[] { "", new CustomFormatter(), "{0:0}", new object[] { 1.2 }, "abc" }; // Custom format provider
+        }
+
+        [Theory]
+        [MemberData(nameof(AppendFormat_TestData))]
+        public static void AppendFormat(string original, IFormatProvider provider, string format, object[] values, string expected)
+        {
+            StringSpanBuilder builder;
+            if (values != null)
+            {
+                if (values.Length == 1)
+                {
+                    // Use AppendFormat(string, object) or AppendFormat(IFormatProvider, string, object)
+                    if (provider == null)
+                    {
+                        // Use AppendFormat(string, object)
+                        builder = new StringSpanBuilder(original);
+                        builder.AppendFormat(format, values[0]);
+                        Assert.Equal(expected, builder.ToString());
+                    }
+                    // Use AppendFormat(IFormatProvider, string, object)
+                    builder = new StringSpanBuilder(original);
+                    builder.AppendFormat(provider, format, values[0]);
+                    Assert.Equal(expected, builder.ToString());
+                }
+                else if (values.Length == 2)
+                {
+                    // Use AppendFormat(string, object, object) or AppendFormat(IFormatProvider, string, object, object)
+                    if (provider == null)
+                    {
+                        // Use AppendFormat(string, object, object)
+                        builder = new StringSpanBuilder(original);
+                        builder.AppendFormat(format, values[0], values[1]);
+                        Assert.Equal(expected, builder.ToString());
+                    }
+                    // Use AppendFormat(IFormatProvider, string, object, object)
+                    builder = new StringSpanBuilder(original);
+                    builder.AppendFormat(provider, format, values[0], values[1]);
+                    Assert.Equal(expected, builder.ToString());
+                }
+                else if (values.Length == 3)
+                {
+                    // Use AppendFormat(string, object, object, object) or AppendFormat(IFormatProvider, string, object, object, object)
+                    if (provider == null)
+                    {
+                        // Use AppendFormat(string, object, object, object)
+                        builder = new StringSpanBuilder(original);
+                        builder.AppendFormat(format, values[0], values[1], values[2]);
+                        Assert.Equal(expected, builder.ToString());
+                    }
+                    // Use AppendFormat(IFormatProvider, string, object, object, object)
+                    builder = new StringSpanBuilder(original);
+                    builder.AppendFormat(provider, format, values[0], values[1], values[2]);
+                    Assert.Equal(expected, builder.ToString());
+                }
+            }
+            // Use AppendFormat(string, object[]) or AppendFormat(IFormatProvider, string, object[])
+            if (provider == null)
+            {
+                // Use AppendFormat(string, object[])
+                builder = new StringSpanBuilder(original);
+                builder.AppendFormat(format, values);
+                Assert.Equal(expected, builder.ToString());
+            }
+            // Use AppendFormat(IFormatProvider, string, object[])
+            builder = new StringSpanBuilder(original);
+            builder.AppendFormat(provider, format, values);
+            Assert.Equal(expected, builder.ToString());
+        }
+
+        [Fact]
+        public static void AppendFormat_Invalid()
+        {
+            var builder = new StringSpanBuilder(0);
+            builder.Append("Hello");
+
+            IFormatProvider formatter = null;
+            var obj1 = new object();
+            var obj2 = new object();
+            var obj3 = new object();
+            var obj4 = new object();
+
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(null, obj1)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(null, obj1, obj2, obj3)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(null, obj1, obj2, obj3)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(null, obj1, obj2, obj3, obj4)); // Format is null
+            Assert.Throws<ArgumentNullException>("args", () => builder.AppendFormat("", null)); // Args is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(null, (object[])null)); // Both format and args are null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(formatter, null, obj1)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(formatter, null, obj1, obj2)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(formatter, null, obj1, obj2, obj3)); // Format is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(formatter, null, obj1, obj2, obj3, obj4)); // Format is null
+            Assert.Throws<ArgumentNullException>("args", () => builder.AppendFormat(formatter, "", null)); // Args is null
+            Assert.Throws<ArgumentNullException>("format", () => builder.AppendFormat(formatter, null, null)); // Both format and args are null
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{-1}", obj1)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{-1}", obj1, obj2)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{-1}", obj1, obj2, obj3)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{-1}", obj1, obj2, obj3, obj4)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{-1}", obj1)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{-1}", obj1, obj2)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{-1}", obj1, obj2, obj3)); // Format has value < 0
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{-1}", obj1, obj2, obj3, obj4)); // Format has value < 0
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{1}", obj1)); // Format has value >= 1
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{2}", obj1, obj2)); // Format has value >= 2
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{3}", obj1, obj2, obj3)); // Format has value >= 3
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{4}", obj1, obj2, obj3, obj4)); // Format has value >= 4
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{1}", obj1)); // Format has value >= 1
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{2}", obj1, obj2)); // Format has value >= 2
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{3}", obj1, obj2, obj3)); // Format has value >= 3
+            Assert.Throws<FormatException>(() => builder.AppendFormat(formatter, "{4}", obj1, obj2, obj3, obj4)); // Format has value >= 4
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{", "")); // Format has unescaped {
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{a", "")); // Format has unescaped {
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("}", "")); // Format has unescaped }
+            Assert.Throws<FormatException>(() => builder.AppendFormat("}a", "")); // Format has unescaped }
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{\0", "")); // Format has invalid character after {
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{a", "")); // Format has invalid character after {
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0     ", "")); // Format with index and spaces is not closed
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{1000000", new string[10])); // Format index is too long
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{10000000}", new string[10])); // Format index is too long
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,", "")); // Format with comma is not closed
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,   ", "")); // Format with comma and spaces is not closed
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,-", "")); // Format with comma and minus sign is not closed
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,-\0", "")); // Format has invalid character after minus sign
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,-a", "")); // Format has invalid character after minus sign
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,1000000", new string[10])); // Format length is too long
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0,10000000}", new string[10])); // Format length is too long
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0:", new string[10])); // Format with colon is not closed
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0:    ", new string[10])); // Format with colon and spaces is not closed
+
+            Assert.Throws<FormatException>(() => builder.AppendFormat("{0:{", new string[10])); // Format with custom format contains unescaped {
         }
 
         public static IEnumerable<object[]> AppendLine_TestData()
@@ -266,6 +453,12 @@ namespace Spans.Text.StringSpanBuilder.Tests
             builder._chunkSpans[0].StartPosition = 0;
             builder._chunkSpans[0].Length = 6;
             Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
+        }
+
+        public class CustomFormatter : ICustomFormatter, IFormatProvider
+        {
+            public string Format(string format, object arg, IFormatProvider formatProvider) => "abc";
+            public object GetFormat(Type formatType) => this;
         }
     }
 }

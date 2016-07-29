@@ -419,8 +419,8 @@ namespace Spans.Text.StringSpanBuilder
                             {
                                 writeOffset -= currentSpan.Length;
 
-                                if (writeOffset < 0 || 
-                                    writeOffset >= lengthLocal || 
+                                if (writeOffset < 0 ||
+                                    writeOffset >= lengthLocal ||
                                     currentSpan.StartPosition < 0 ||
                                     currentSpan.StartPosition + currentSpan.Length > currentSpan.Value.Length)
                                 {
@@ -450,6 +450,398 @@ namespace Spans.Text.StringSpanBuilder
             }
         }
 
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument.
+        /// </summary>
+        /// <returns>A reference to this instance with <paramref name="format" /> appended. Each format item in <paramref name="format" /> is replaced by the string representation of <paramref name="arg0" />.</returns>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">An object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to 1.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(string format, object arg0)
+        {
+            return AppendFormatHelper(null, format, new ParamsArray(arg0));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of either of two arguments.
+        /// </summary>
+        /// <returns>A reference to this instance with <paramref name="format" /> appended. Each format item in <paramref name="format" /> is replaced by the string representation of the corresponding object argument.</returns>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">The first object to format. </param>
+        /// <param name="arg1">The second object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid.-or-The index of a format item is less than 0 (zero), or greater than or equal to 2. </exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(string format, object arg0, object arg1)
+        {
+            return AppendFormatHelper(null, format, new ParamsArray(arg0, arg1));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of either of three arguments.
+        /// </summary>
+        /// <returns>A reference to this instance with <paramref name="format" /> appended. Each format item in <paramref name="format" /> is replaced by the string representation of the corresponding object argument.</returns>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">The first object to format. </param>
+        /// <param name="arg1">The second object to format. </param>
+        /// <param name="arg2">The third object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid.-or-The index of a format item is less than 0 (zero), or greater than or equal to 3.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(string format, object arg0, object arg1, object arg2)
+        {
+            return AppendFormatHelper(null, format, new ParamsArray(arg0, arg1, arg2));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a corresponding argument in a parameter array.
+        /// </summary>
+        /// <returns>A reference to this instance with <paramref name="format" /> appended. Each format item in <paramref name="format" /> is replaced by the string representation of the corresponding object argument.</returns>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="args">An array of objects to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> or <paramref name="args" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to the length of the <paramref name="args" /> array.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(string format, params object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException((format == null) ? nameof(format) : nameof(args));
+            }
+
+            return AppendFormatHelper(null, format, new ParamsArray(args));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a single argument using a specified format provider. 
+        /// </summary>
+        /// <returns>A reference to this instance after the append operation has completed. After the append operation, this instance contains any data that existed before the operation, suffixed by a copy of <paramref name="format" /> in which any format specification is replaced by the string representation of <paramref name="arg0" />. </returns>
+        /// <param name="provider">An object that supplies culture-specific formatting information. </param>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">The object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to one (1). </exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(IFormatProvider provider, string format, object arg0)
+        {
+            return AppendFormatHelper(provider, format, new ParamsArray(arg0));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of either of two arguments using a specified format provider.
+        /// </summary>
+        /// <returns>A reference to this instance after the append operation has completed. After the append operation, this instance contains any data that existed before the operation, suffixed by a copy of <paramref name="format" /> where any format specification is replaced by the string representation of the corresponding object argument. </returns>
+        /// <param name="provider">An object that supplies culture-specific formatting information. </param>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">The first object to format. </param>
+        /// <param name="arg1">The second object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to 2 (two). </exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(IFormatProvider provider, string format, object arg0, object arg1)
+        {
+            return AppendFormatHelper(provider, format, new ParamsArray(arg0, arg1));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of either of three arguments using a specified format provider.
+        /// </summary>
+        /// <returns>A reference to this instance after the append operation has completed. After the append operation, this instance contains any data that existed before the operation, suffixed by a copy of <paramref name="format" /> where any format specification is replaced by the string representation of the corresponding object argument. </returns>
+        /// <param name="provider">An object that supplies culture-specific formatting information. </param>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="arg0">The first object to format. </param>
+        /// <param name="arg1">The second object to format. </param>
+        /// <param name="arg2">The third object to format. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to 3 (three). </exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(IFormatProvider provider, string format, object arg0, object arg1, object arg2)
+        {
+            return AppendFormatHelper(provider, format, new ParamsArray(arg0, arg1, arg2));
+        }
+
+        /// <summary>
+        /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance. Each format item is replaced by the string representation of a corresponding argument in a parameter array using a specified format provider.
+        /// </summary>
+        /// <returns>A reference to this instance after the append operation has completed. After the append operation, this instance contains any data that existed before the operation, suffixed by a copy of <paramref name="format" /> where any format specification is replaced by the string representation of the corresponding object argument. </returns>
+        /// <param name="provider">An object that supplies culture-specific formatting information. </param>
+        /// <param name="format">A composite format string (see Remarks). </param>
+        /// <param name="args">An array of objects to format.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="format" /> is null. </exception>
+        /// <exception cref="T:System.FormatException"><paramref name="format" /> is invalid. -or-The index of a format item is less than 0 (zero), or greater than or equal to the length of the <paramref name="args" /> array.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException">The length of the expanded string would exceed the length allowed for a string. </exception>
+        public StringSpanBuilder AppendFormat(IFormatProvider provider, string format, params object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException((format == null) ? nameof(format) : nameof(args));
+            }
+
+            return AppendFormatHelper(provider, format, new ParamsArray(args));
+        }
+
+        private static void FormatError()
+        {
+            throw new FormatException(Resources.Strings.Format_InvalidString);
+        }
+
+        private StringSpanBuilder AppendFormatHelper(IFormatProvider provider, string format, ParamsArray args)
+        {
+            if (format == null)
+            {
+                throw new ArgumentNullException(nameof(format));
+            }
+
+            int startPos = 0;
+            int pos = 0;
+            int len = format.Length;
+            char ch = '\x0';
+
+            ICustomFormatter cf = null;
+            if (provider != null)
+            {
+                cf = (ICustomFormatter)provider.GetFormat(typeof(ICustomFormatter));
+            }
+
+            while (true)
+            {
+                startPos = pos;
+
+                while (pos < len)
+                {
+                    ch = format[pos];
+                    pos++;
+
+                    if (ch == '}')
+                    {
+                        if (pos < len && format[pos] == '}') // Treat as escape character for }}
+                        {
+                            Append(format, startPos, pos - startPos);
+                            pos++;
+                            startPos = pos;
+                        }
+                        else
+                        {
+                            FormatError();
+                        }
+                    }
+
+                    if (ch == '{')
+                    {
+                        if (pos < len && format[pos] == '{') // Treat as escape character for {{
+                        {
+                            Append(format, startPos, pos - startPos);
+                            pos++;
+                            startPos = pos;
+                        }
+                        else
+                        {
+                            pos--;
+                            if (startPos != pos)
+                            {
+                                Append(format, startPos, pos - startPos);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (pos == len)
+                {
+                    if (startPos != pos - 1)
+                    {
+                        Append(format, startPos, pos - startPos);
+                    }
+
+                    break;
+                }
+
+                pos++;
+                if (pos == len || (ch = format[pos]) < '0' || ch > '9')
+                {
+                    FormatError();
+                }
+
+                int index = 0;
+                do
+                {
+                    index = index * 10 + ch - '0';
+                    pos++;
+                    if (pos == len)
+                    {
+                        FormatError();
+                    }
+                    ch = format[pos];
+                } while (ch >= '0' && ch <= '9' && index < 1000000);
+
+                if (index >= args.Length)
+                {
+                    throw new FormatException(Resources.Strings.Format_IndexOutOfRange);
+                }
+
+                while (pos < len && (ch = format[pos]) == ' ')
+                {
+                    pos++;
+                }
+
+                bool leftJustify = false;
+                int width = 0;
+
+                if (ch == ',')
+                {
+                    pos++;
+                    while (pos < len && format[pos] == ' ')
+                    {
+                        pos++;
+                    }
+
+                    if (pos == len)
+                    {
+                        FormatError();
+                    }
+
+                    ch = format[pos];
+                    if (ch == '-')
+                    {
+                        leftJustify = true;
+                        pos++;
+                        if (pos == len)
+                        {
+                            FormatError();
+                        }
+                        ch = format[pos];
+                    }
+
+                    if (ch < '0' || ch > '9')
+                    {
+                        FormatError();
+                    }
+
+                    do
+                    {
+                        width = width * 10 + ch - '0';
+                        pos++;
+                        if (pos == len)
+                        {
+                            FormatError();
+                        }
+                        ch = format[pos];
+                    } while (ch >= '0' && ch <= '9' && width < 1000000);
+                }
+
+                while (pos < len && (ch = format[pos]) == ' ')
+                {
+                    pos++;
+                }
+
+                object arg = args[index];
+                string itemFormat = null;
+
+                if (ch == ':')
+                {
+                    pos++;
+                    int itemFormatStartPos = pos;
+                    bool isEscaped = false;
+
+                    while (true)
+                    {
+                        if (pos == len)
+                        {
+                            FormatError();
+                        }
+
+                        ch = format[pos];
+                        pos++;
+
+                        if (ch == '}' || ch == '{')
+                        {
+                            if (ch == '{')
+                            {
+                                if (pos < len && format[pos] == '{')  // Treat as escape character for {{
+                                {
+                                    isEscaped = true;
+                                    pos++;
+                                }
+                                else
+                                {
+                                    FormatError();
+                                }
+                            }
+                            else
+                            {
+                                if (pos < len && format[pos] == '}')  // Treat as escape character for }}
+                                {
+                                    isEscaped = true;
+                                    pos++;
+                                }
+                                else
+                                {
+                                    pos--;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (itemFormatStartPos != pos)
+                    {
+                        itemFormat = format.Substring(itemFormatStartPos, pos - itemFormatStartPos);
+
+                        if (isEscaped)
+                        {
+                            itemFormat = itemFormat.Replace("{{", "{").Replace("}}", "}");
+                        }
+                    }
+                }
+
+                if (ch != '}')
+                {
+                    FormatError();
+                }
+
+                pos++;
+                string s = null;
+
+                if (cf != null)
+                {
+                    s = cf.Format(itemFormat, arg, provider);
+                }
+
+                if (s == null)
+                {
+                    IFormattable formattableArg = arg as IFormattable;
+
+                    if (formattableArg != null)
+                    {
+                        s = formattableArg.ToString(itemFormat, provider);
+                    }
+                    else if (arg != null)
+                    {
+                        s = arg.ToString();
+                    }
+                }
+
+                if (s == null)
+                {
+                    s = String.Empty;
+                }
+
+                int pad = width - s.Length;
+                if (!leftJustify && pad > 0)
+                {
+                    Append(new string(' ', pad));
+                }
+                Append(s);
+                if (leftJustify && pad > 0)
+                {
+                    Append(new string(' ', pad));
+                }
+            }
+            return this;
+        }
+
         private void AppendHelper(string value, int startIndex, int length)
         {
             _spanIndex++;
@@ -474,7 +866,7 @@ namespace Spans.Text.StringSpanBuilder
 
         private void ExpandByABlock()
         {
-            int newBlockLength = Math.Min(_chunkSpans.Length * 2, MaxChunkSize);
+            int newBlockLength = Math.Max(Math.Min(_chunkSpans.Length * 2, MaxChunkSize), DefaultCapacity);
 
             // Copy the current block to the new block
             _chunkPrevious = new StringSpanBuilder(this);
@@ -539,6 +931,82 @@ namespace Spans.Text.StringSpanBuilder
                 Value = value;
                 StartPosition = startPosition;
                 Length = length;
+            }
+        }
+
+        internal struct ParamsArray
+        {
+            // Sentinel fixed-length arrays eliminate the need for a "count" field keeping this
+            // struct down to just 4 fields. These are only used for their "Length" property,
+            // that is, their elements are never set or referenced.
+            private static readonly object[] oneArgArray = new object[1];
+            private static readonly object[] twoArgArray = new object[2];
+            private static readonly object[] threeArgArray = new object[3];
+
+            private readonly object arg0;
+            private readonly object arg1;
+            private readonly object arg2;
+
+            // After construction, the first three elements of this array will never be accessed
+            // because the indexer will retrieve those values from arg0, arg1, and arg2.
+            private readonly object[] args;
+
+            public ParamsArray(object arg0)
+            {
+                this.arg0 = arg0;
+                this.arg1 = null;
+                this.arg2 = null;
+
+                // Always assign this.args to make use of its "Length" property
+                this.args = oneArgArray;
+            }
+
+            public ParamsArray(object arg0, object arg1)
+            {
+                this.arg0 = arg0;
+                this.arg1 = arg1;
+                this.arg2 = null;
+
+                // Always assign this.args to make use of its "Length" property
+                this.args = twoArgArray;
+            }
+
+            public ParamsArray(object arg0, object arg1, object arg2)
+            {
+                this.arg0 = arg0;
+                this.arg1 = arg1;
+                this.arg2 = arg2;
+
+                // Always assign this.args to make use of its "Length" property
+                this.args = threeArgArray;
+            }
+
+            public ParamsArray(object[] args)
+            {
+                int len = args.Length;
+                this.arg0 = len > 0 ? args[0] : null;
+                this.arg1 = len > 1 ? args[1] : null;
+                this.arg2 = len > 2 ? args[2] : null;
+                this.args = args;
+            }
+
+            public int Length
+            {
+                get { return this.args.Length; }
+            }
+
+            public object this[int index]
+            {
+                get { return index == 0 ? this.arg0 : GetAtSlow(index); }
+            }
+
+            private object GetAtSlow(int index)
+            {
+                if (index == 1)
+                    return this.arg1;
+                if (index == 2)
+                    return this.arg2;
+                return this.args[index];
             }
         }
     }
