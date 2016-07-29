@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0-*",
+  "authors": [ "Bruce Bowyer-Smyth" ],
+  "description": "A string writer that uses StringSpanBuilder.",
+  "packOptions": {
+    "copyright": "Copyright Bruce Bowyer-Smyth",
+    "owners": [ "Bruce Bowyer-Smyth" ],
+    "licenseUrl": "https://github.com/bbowyersmyth/StringSpanBuilder/blob/master/LICENSE.txt",
+    "projectUrl": "https://github.com/bbowyersmyth/StringSpanBuilder",
+    "requireLicenseAcceptance": false,
+    "summary": "A string writer that uses StringSpanBuilder"
+  },
+  "dependencies": {
+    "StringSpanBuilder": "0.1.0-*"
+  },
+  "buildOptions": {
+    "xmlDoc": true,
+    "warningsAsErrors": true
+  },
+  "frameworks": {
+    "netstandard1.4": {
+      "dependencies": {
+        "System.IO": "4.1.0",
+        "System.Resources.ResourceManager": "4.0.1",
+        "System.Runtime": "4.1.0",
+        "System.Text.Encoding.Extensions": "4.0.11",
+        "System.Threading": "4.0.11"
+      }
+    },
+    "net46": {
+    }
+  }
+}
