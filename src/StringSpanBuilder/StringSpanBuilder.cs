@@ -410,7 +410,7 @@ namespace Spans.Text.StringSpanBuilder
                                 {
                                     // There has been an error calculating lengths at some point.
                                     // Bail to avoid a buffer overrun write.
-                                    throw new IndexOutOfRangeException();
+                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
                                 }
 
                                 *(destinationPtr + writeOffset) = currentSpan.Value[currentSpan.StartPosition];
@@ -426,7 +426,7 @@ namespace Spans.Text.StringSpanBuilder
                                 {
                                     // There has been an error calculating lengths at some point.
                                     // Bail to avoid a buffer overrun write.
-                                    throw new IndexOutOfRangeException();
+                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
                                 }
 
                                 fixed (char* sourcePtr = currentSpan.Value)

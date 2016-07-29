@@ -243,29 +243,29 @@ namespace Spans.Text.StringSpanBuilder.Tests
 
             // Length or start index corruption
             builder._chunkSpans[0].Length = 6;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
 
             builder._chunkSpans[0].Length = int.MaxValue;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
 
             builder._chunkSpans[0].StartPosition = 4;
             builder._chunkSpans[0].Length = 3;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
 
             builder._chunkSpans[0].StartPosition = -1;
             builder._chunkSpans[0].Length = origLength - 1;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
 
             builder._chunkSpans[0].StartPosition = 6;
             builder._chunkSpans[0].Length = origLength;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
 
 
             // Total length corruption
             builder._chunkSpans[0].Value = "Longer";
             builder._chunkSpans[0].StartPosition = 0;
             builder._chunkSpans[0].Length = 6;
-            Assert.Throws<IndexOutOfRangeException>(() => builder.ToString());
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
         }
     }
 }
