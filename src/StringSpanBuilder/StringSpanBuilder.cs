@@ -431,11 +431,18 @@ namespace Spans.Text.StringSpanBuilder
 
                                 fixed (char* sourcePtr = currentSpan.Value)
                                 {
+#if NOMEMORYCOPY
+                                    BufferCompat.Memmove(
+                                           (byte*)(destinationPtr + writeOffset),
+                                           (byte*)(sourcePtr + currentSpan.StartPosition),
+                                           (uint)currentSpan.Length * sizeof(char));
+#else
                                     Buffer.MemoryCopy(
                                         sourcePtr + currentSpan.StartPosition,
                                         destinationPtr + writeOffset,
                                         stringLengthInBytes - (writeOffset * sizeof(char)),
                                         (long)currentSpan.Length * sizeof(char));
+#endif //NOMEMORYCOPY
                                 }
                             }
 

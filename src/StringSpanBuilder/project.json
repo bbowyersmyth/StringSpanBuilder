@@ -17,12 +17,28 @@
     "optimize": false
   },
   "frameworks": {
+    "netstandard1.0": {
+      "dependencies": {
+        "System.Diagnostics.Debug": "4.0.11",
+        "System.Resources.ResourceManager": "4.0.1",
+        "System.Runtime": "4.1.0",
+        "System.Runtime.Extensions": "4.1.0"
+      },
+      "buildOptions": {
+        "define": [ "NOMEMORYCOPY" ]
+      }
+    },
     "netstandard1.4": {
       "dependencies": {
         "System.Diagnostics.Debug": "4.0.11",
         "System.Resources.ResourceManager": "4.0.1",
         "System.Runtime": "4.1.0",
         "System.Runtime.Extensions": "4.1.0"
+      }
+    },
+    "net45": {
+      "buildOptions": {
+        "define": [ "NOMEMORYCOPY" ]
       }
     },
     "net46": {
