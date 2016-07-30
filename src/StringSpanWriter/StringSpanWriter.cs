@@ -116,36 +116,24 @@ namespace Spans.IO.StringSpanWriter
 
             switch (value)
             {
+                case '\n':
+                    _sb.Append("\n");
+                    break;
+
+                case '\r':
+                    _sb.Append("\r");
+                    break;
+
+                case ' ':
+                    _sb.Append(" ");
+                    break;
+
                 case '"':
                     _sb.Append("\"");
                     break;
 
                 case '\'':
                     _sb.Append("'");
-                    break;
-
-                case ',':
-                    _sb.Append(",");
-                    break;
-
-                case '/':
-                    _sb.Append("/");
-                    break;
-
-                case '{':
-                    _sb.Append("{");
-                    break;
-
-                case '}':
-                    _sb.Append("}");
-                    break;
-
-                case '[':
-                    _sb.Append("[");
-                    break;
-
-                case ']':
-                    _sb.Append("]");
                     break;
 
                 case '(':
@@ -156,28 +144,12 @@ namespace Spans.IO.StringSpanWriter
                     _sb.Append(")");
                     break;
 
-                case '<':
-                    _sb.Append("<");
+                case ',':
+                    _sb.Append(",");
                     break;
 
-                case '>':
-                    _sb.Append(">");
-                    break;
-
-                case ';':
-                    _sb.Append(";");
-                    break;
-
-                case ':':
-                    _sb.Append(":");
-                    break;
-
-                case '=':
-                    _sb.Append("=");
-                    break;
-
-                case ' ':
-                    _sb.Append(" ");
+                case '/':
+                    _sb.Append("/");
                     break;
 
                 case '0':
@@ -220,12 +192,40 @@ namespace Spans.IO.StringSpanWriter
                     _sb.Append("9");
                     break;
 
-                case '\r':
-                    _sb.Append("\r");
+                case ':':
+                    _sb.Append(":");
                     break;
 
-                case '\n':
-                    _sb.Append("\n");
+                case ';':
+                    _sb.Append(";");
+                    break;
+
+                case '<':
+                    _sb.Append("<");
+                    break;
+
+                case '=':
+                    _sb.Append("=");
+                    break;
+
+                case '>':
+                    _sb.Append(">");
+                    break;
+
+                case '[':
+                    _sb.Append("[");
+                    break;
+
+                case ']':
+                    _sb.Append("]");
+                    break;
+
+                case '{':
+                    _sb.Append("{");
+                    break;
+
+                case '}':
+                    _sb.Append("}");
                     break;
 
                 default:
