@@ -60,6 +60,24 @@ namespace Spans.Text.StringSpanBuilder.Resources {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to Source string was not long enough. Check sourceIndex and count..
+        /// </summary>
+        public static string Arg_LongerThanSrcString {
+            get {
+                return ResourceManager.GetString("Arg_LongerThanSrcString", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Argument count must not be negative..
+        /// </summary>
+        public static string Arg_NegativeArgCount {
+            get {
+                return ResourceManager.GetString("Arg_NegativeArgCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to Value must be positive..
         /// </summary>
         public static string ArgumentOutOfRange_GenericPositive {
@@ -87,6 +105,15 @@ namespace Spans.Text.StringSpanBuilder.Resources {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to &apos;{0}&apos; must be non-negative..
+        /// </summary>
+        public static string ArgumentOutOfRange_MustBeNonNegNum {
+            get {
+                return ResourceManager.GetString("ArgumentOutOfRange_MustBeNonNegNum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to &apos;{0}&apos; must be greater than zero..
         /// </summary>
         public static string ArgumentOutOfRange_MustBePositive {
@@ -101,6 +128,15 @@ namespace Spans.Text.StringSpanBuilder.Resources {
         public static string ArgumentOutOfRange_NegativeLength {
             get {
                 return ResourceManager.GetString("ArgumentOutOfRange_NegativeLength", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Either offset did not refer to a position in the string, or there is an insufficient length of destination character array..
+        /// </summary>
+        public static string ArgumentOutOfRange_OffsetOut {
+            get {
+                return ResourceManager.GetString("ArgumentOutOfRange_OffsetOut", resourceCulture);
             }
         }
         

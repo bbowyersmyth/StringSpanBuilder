@@ -126,11 +126,23 @@
   <data name="ArgumentOutOfRange_Index" xml:space="preserve">
     <value>Index was out of range. Must be non-negative and less than the size of the collection.</value>
   </data>
+  <data name="ArgumentOutOfRange_MustBeNonNegNum" xml:space="preserve">
+    <value>'{0}' must be non-negative.</value>
+  </data>
   <data name="ArgumentOutOfRange_MustBePositive" xml:space="preserve">
     <value>'{0}' must be greater than zero.</value>
   </data>
   <data name="ArgumentOutOfRange_NegativeLength" xml:space="preserve">
     <value>Length cannot be less than zero.</value>
+  </data>
+  <data name="ArgumentOutOfRange_OffsetOut" xml:space="preserve">
+    <value>Either offset did not refer to a position in the string, or there is an insufficient length of destination character array.</value>
+  </data>
+  <data name="Arg_LongerThanSrcString" xml:space="preserve">
+    <value>Source string was not long enough. Check sourceIndex and count.</value>
+  </data>
+  <data name="Arg_NegativeArgCount" xml:space="preserve">
+    <value>Argument count must not be negative.</value>
   </data>
   <data name="Format_IndexOutOfRange" xml:space="preserve">
     <value>Index (zero based) must be greater than or equal to zero and less than the size of the argument list.</value>

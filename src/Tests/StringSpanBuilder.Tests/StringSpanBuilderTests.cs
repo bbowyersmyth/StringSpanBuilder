@@ -10,7 +10,8 @@ namespace Spans.Text.StringSpanBuilder.Tests
 {
     public static class StringSpanBuilderTests
     {
-        private static StringSpanBuilder StringSpanBuilderWithMultipleChunks() => new StringSpanBuilder(2).Append("ABC").Append("123").Append("XYZ");
+        private static readonly string s_chunkSplitSource = "ABC123XYZ";
+        private static StringSpanBuilder StringSpanBuilderWithMultipleChunks() => new StringSpanBuilder(2).Append("ABC").Append("*123*", 1, 3).Append("XYZ");
 
         [Fact]
         public static void Ctor_Empty()
@@ -414,7 +415,7 @@ namespace Spans.Text.StringSpanBuilder.Tests
         public static void ToString_StringSpanBuilderWithMultipleChunks()
         {
             StringSpanBuilder builder = StringSpanBuilderWithMultipleChunks();
-            Assert.Equal("ABC123XYZ", builder.ToString());
+            Assert.Equal(s_chunkSplitSource, builder.ToString());
         }
 
         [Fact]
@@ -453,6 +454,91 @@ namespace Spans.Text.StringSpanBuilder.Tests
             builder._chunkSpans[0].StartPosition = 0;
             builder._chunkSpans[0].Length = 6;
             Assert.Throws<ArgumentOutOfRangeException>(() => builder.ToString());
+        }
+
+        [Theory]
+        [InlineData("Hello", 0, new char[] { '\0', '\0', '\0', '\0', '\0' }, 0, 5, new char[] { 'H', 'e', 'l', 'l', 'o' })]
+        [InlineData("Hello", 0, new char[] { '\0', '\0', '\0', '\0', '\0', '\0' }, 1, 5, new char[] { '\0', 'H', 'e', 'l', 'l', 'o' })]
+        [InlineData("Hello", 0, new char[] { '\0', '\0', '\0', '\0' }, 0, 4, new char[] { 'H', 'e', 'l', 'l' })]
+        [InlineData("Hello", 1, new char[] { '\0', '\0', '\0', '\0', '\0', '\0', '\0' }, 2, 4, new char[] { '\0', '\0', 'e', 'l', 'l', 'o', '\0' })]
+        public static void CopyTo(string value, int sourceIndex, char[] destination, int destinationIndex, int count, char[] expected)
+        {
+            var builder = new StringSpanBuilder(value);
+            builder.CopyTo(sourceIndex, destination, destinationIndex, count);
+        }
+
+        [Fact]
+        public static void CopyTo_StringSpanBuilderWithMultipleChunks()
+        {
+            StringSpanBuilder builder = StringSpanBuilderWithMultipleChunks();
+
+            char[] destination = new char[builder.Length];
+            builder.CopyTo(0, destination, 0, destination.Length);
+            Assert.Equal(s_chunkSplitSource.ToCharArray(), destination);
+
+            destination = new char[builder.Length - 2];
+            builder.CopyTo(1, destination, 0, destination.Length);
+            Assert.Equal(s_chunkSplitSource.Substring(1, builder.Length - 2).ToCharArray(), destination);
+
+            destination = new char[builder.Length - 4];
+            builder.CopyTo(0, destination, 0, destination.Length);
+            Assert.Equal(s_chunkSplitSource.Substring(0, builder.Length - 4).ToCharArray(), destination);
+
+            destination = new char[1];
+            builder.CopyTo(3, destination, 0, destination.Length);
+            Assert.Equal(s_chunkSplitSource.Substring(3, 1).ToCharArray(), destination);
+        }
+
+        [Fact]
+        public static void CopyTo_Invalid()
+        {
+            var builder = new StringSpanBuilder("Hello");
+            Assert.Throws<ArgumentNullException>("destination", () => builder.CopyTo(0, null, 0, 0)); // Destination is null
+
+            Assert.Throws<ArgumentOutOfRangeException>("sourceIndex", () => builder.CopyTo(-1, new char[10], 0, 0)); // Source index < 0
+            Assert.Throws<ArgumentOutOfRangeException>("sourceIndex", () => builder.CopyTo(6, new char[10], 0, 0)); // Source index > builder.Length
+
+            Assert.Throws<ArgumentOutOfRangeException>("destinationIndex", () => builder.CopyTo(0, new char[10], -1, 0)); // Destination index < 0
+            Assert.Throws<ArgumentOutOfRangeException>("count", () => builder.CopyTo(0, new char[10], 0, -1)); // Count < 0
+
+            Assert.Throws<ArgumentException>(null, () => builder.CopyTo(5, new char[10], 0, 1)); // Source index + count > builder.Length
+            Assert.Throws<ArgumentException>(null, () => builder.CopyTo(4, new char[10], 0, 2)); // Source index + count > builder.Length
+
+            Assert.Throws<ArgumentException>(null, () => builder.CopyTo(0, new char[10], 10, 1)); // Destination index + count > destinationArray.Length
+            Assert.Throws<ArgumentException>(null, () => builder.CopyTo(0, new char[10], 9, 2)); // Destination index + count > destinationArray.Length
+        }
+
+        [Fact]
+        public static void CopyTo_Corrupt()
+        {
+            var builder = new StringSpanBuilder(5);
+            int count = 7;
+            char[] destination = new char[count];
+            builder.Append("Hello").Append("Padding");
+
+            string origValue = builder._chunkSpans[0].Value;
+            int origStartIndex = builder._chunkSpans[0].StartPosition;
+            int origLength = builder._chunkSpans[0].Length;
+
+
+            // Length or start index corruption
+            builder._chunkSpans[0].Length = 6;
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
+
+            builder._chunkSpans[0].Length = int.MaxValue;
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
+
+            builder._chunkSpans[0].StartPosition = 4;
+            builder._chunkSpans[0].Length = 3;
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
+
+            builder._chunkSpans[0].StartPosition = -1;
+            builder._chunkSpans[0].Length = origLength - 1;
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
+
+            builder._chunkSpans[0].StartPosition = 6;
+            builder._chunkSpans[0].Length = origLength;
+            Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
         }
 
         public class CustomFormatter : ICustomFormatter, IFormatProvider

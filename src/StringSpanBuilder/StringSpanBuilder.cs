@@ -371,6 +371,138 @@ namespace Spans.Text.StringSpanBuilder
         }
 
         /// <summary>
+        /// Copies the characters from a specified segment of this instance to a specified segment of a destination <see cref="T:System.Char" /> array.
+        /// </summary>
+        /// <param name="sourceIndex">The starting position in this instance where characters will be copied from. The index is zero-based.</param>
+        /// <param name="destination">The array where characters will be copied.</param>
+        /// <param name="destinationIndex">The starting position in <paramref name="destination" /> where characters will be copied. The index is zero-based.</param>
+        /// <param name="count">The number of characters to be copied.</param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="destination" /> is null.</exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="sourceIndex" />, <paramref name="destinationIndex" />, or <paramref name="count" />, is less than zero.-or-<paramref name="sourceIndex" /> is greater than the length of this instance.</exception>
+        /// <exception cref="T:System.ArgumentException"><paramref name="sourceIndex" /> + <paramref name="count" /> is greater than the length of this instance.-or-<paramref name="destinationIndex" /> + <paramref name="count" /> is greater than the length of <paramref name="destination" />.</exception>
+        public void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count), Resources.Strings.Arg_NegativeArgCount);
+            }
+
+            if (destinationIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(destinationIndex),
+                    string.Format(Resources.Strings.ArgumentOutOfRange_MustBeNonNegNum, nameof(destinationIndex)));
+            }
+
+            if (destinationIndex > destination.Length - count)
+            {
+                throw new ArgumentException(Resources.Strings.ArgumentOutOfRange_OffsetOut);
+            }
+
+            if ((uint)sourceIndex > (uint)Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceIndex), Resources.Strings.ArgumentOutOfRange_Index);
+            }
+
+            if (sourceIndex > Length - count)
+            {
+                throw new ArgumentException(Resources.Strings.Arg_LongerThanSrcString);
+            }
+
+            if (count == 0)
+            {
+                return;
+            }
+
+            StringSpanBuilder chunk = this;
+            int sourceEndIndex = sourceIndex + count;
+            int sourceStartIndex = sourceIndex;
+            int readOffset = Length;
+            int writeOffset = destinationIndex + count;
+            long arrayLengthInBytes = (long)destination.Length * sizeof(char);
+
+            unsafe
+            {
+                fixed (char* destinationPtr = destination)
+                {
+                    do
+                    {
+                        int currentIndex = chunk._spanIndex;
+
+                        while (currentIndex > -1)
+                        {
+                            var currentSpan = chunk._chunkSpans[currentIndex];
+
+                            if (currentSpan.Length > 0 && readOffset - currentSpan.Length < sourceEndIndex)
+                            {
+                                int readPos = currentSpan.StartPosition;
+                                int readLength = currentSpan.Length;
+                                
+                                if (readOffset > sourceEndIndex)
+                                {
+                                    readLength -= (readOffset - sourceEndIndex);
+                                }
+
+                                if (readOffset - readLength < sourceStartIndex)
+                                {
+                                    int startDiff = sourceStartIndex - (readOffset - readLength);
+                                    readPos += startDiff;
+                                    readLength -= startDiff;
+                                }
+
+                                writeOffset -= readLength;
+                                readOffset -= currentSpan.Length;
+
+                                if (writeOffset < destinationIndex ||
+                                    writeOffset > destinationIndex + count ||
+                                    readPos < 0 ||
+                                    readPos + readLength > currentSpan.Value.Length)
+                                {
+                                    // There has been an error calculating lengths at some point.
+                                    // Bail to avoid a buffer overrun write.
+                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
+                                }
+
+                                fixed (char* sourcePtr = currentSpan.Value)
+                                {
+#if NOMEMORYCOPY
+                                    BufferCompat.Memmove(
+                                           (byte*)(destinationPtr + writeOffset),
+                                           (byte*)(sourcePtr + readPos),
+                                           (uint)readLength * sizeof(char));
+#else
+                                    Buffer.MemoryCopy(
+                                        sourcePtr + readPos,
+                                        destinationPtr + writeOffset,
+                                        arrayLengthInBytes - (writeOffset * sizeof(char)),
+                                        (long)readLength * sizeof(char));
+#endif //NOMEMORYCOPY
+                                }
+                            }
+                            else
+                            {
+                                readOffset -= currentSpan.Length;
+                            }
+
+                            currentIndex--;
+                        }
+
+                        if (writeOffset <= destinationIndex)
+                        {
+                            break;
+                        }
+
+                        chunk = chunk._chunkPrevious;
+                    } while (chunk != null);
+                }
+            }
+        }
+
+        /// <summary>
         /// Converts the value of this instance to a <see cref="T:System.String" />.
         /// </summary>
         /// <returns>A string whose value is the same as this instance.</returns>
