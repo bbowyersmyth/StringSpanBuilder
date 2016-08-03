@@ -12,6 +12,7 @@
   },
   "buildOptions": {
     "allowUnsafe": true,
+    "keyFile": "../../tools/Key.snk",
     "xmlDoc": true,
     "warningsAsErrors": true,
     "optimize": false

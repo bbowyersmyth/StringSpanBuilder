@@ -15,6 +15,7 @@
   },
   "buildOptions": {
     "xmlDoc": true,
+    "keyFile": "../../tools/Key.snk",
     "warningsAsErrors": true
   },
   "frameworks": {

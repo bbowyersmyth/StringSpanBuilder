@@ -230,7 +230,6 @@ namespace Spans.Text.StringSpanBuilder
         }
 
         //public char this[int index] { get; }
-        //public void CopyTo(int sourceIndex, char[] destination, int destinationIndex, int count)
         //public StringSpanBuilder Insert(int index, string value, int count)
         //public StringSpanBuilder Insert(int index, string value)
         //public StringSpanBuilder Remove(int startIndex, int length)
