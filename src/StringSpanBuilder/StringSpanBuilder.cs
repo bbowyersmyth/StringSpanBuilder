@@ -229,6 +229,69 @@ namespace Spans.Text.StringSpanBuilder
             return Append(Environment.NewLine);
         }
 
+        /// <summary>
+        /// Prepends a copy of the specified string to this instance.
+        /// </summary>
+        /// <returns>A reference to this instance after the prepend operation has completed.</returns>
+        /// <param name="value">The string to prepend.</param>
+        /// <exception cref="T:System.OutOfMemoryException">Enlarging the value of this instance would exceed the length allowed for a string.</exception>
+        public StringSpanBuilder Prepend(string value)
+        {
+            if (value != null && value.Length > 0)
+            {
+                PrependHelper(value, 0, value.Length);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Prepends the specified string portion to this instance.
+        /// </summary>
+        /// <returns>A reference to this instance after the prepend operation has completed.</returns>
+        /// <param name="value">The string that contains the portion to prepend. </param>
+        /// <param name="startIndex">The starting position of the portion within <paramref name="value" />. </param>
+        /// <param name="length">The number of characters in <paramref name="value" /> to prepend. </param>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="value" /> is null, and <paramref name="startIndex" /> and <paramref name="length" /> are not zero. </exception>
+        /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="length" /> less than zero.-or- <paramref name="startIndex" /> less than zero.-or- 
+        /// <paramref name="startIndex" /> + <paramref name="length" /> is greater than the length of <paramref name="value" />.</exception>
+        /// <exception cref="T:System.OutOfMemoryException">Enlarging the value of this instance would exceed the length allowed for a string.</exception>
+        public StringSpanBuilder Prepend(string value, int startIndex, int length)
+        {
+            if (startIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Resources.Strings.ArgumentOutOfRange_Index);
+            }
+
+            if (length < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(length), Resources.Strings.ArgumentOutOfRange_GenericPositive);
+            }
+
+            // If the value being added is null, eat the null and return.
+            if (value == null)
+            {
+                if (startIndex == 0 && length == 0)
+                {
+                    return this;
+                }
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (length == 0)
+            {
+                return this;
+            }
+
+            if (startIndex > value.Length - length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(startIndex), Resources.Strings.ArgumentOutOfRange_Index);
+            }
+
+            PrependHelper(value, startIndex, length);
+
+            return this;
+        }
+
         //public char this[int index] { get; }
         //public StringSpanBuilder Insert(int index, string value, int count)
         //public StringSpanBuilder Insert(int index, string value)
@@ -440,7 +503,7 @@ namespace Spans.Text.StringSpanBuilder
                             {
                                 int readPos = currentSpan.StartPosition;
                                 int readLength = currentSpan.Length;
-                                
+
                                 if (readOffset > sourceEndIndex)
                                 {
                                     readLength -= (readOffset - sourceEndIndex);
@@ -991,6 +1054,51 @@ namespace Spans.Text.StringSpanBuilder
             }
 
             _chunkSpans[_spanIndex] = new CharSpan(value, startIndex, length);
+
+            // Check for integer overflow
+            if (_totalLength + length < _totalLength)
+            {
+                _chunkSpans = null;
+                throw new OutOfMemoryException();
+            }
+
+            _totalLength += length;
+        }
+
+        private void PrependHelper(string value, int startIndex, int length)
+        {
+            StringSpanBuilder chunk = this;
+
+            while (chunk._chunkPrevious != null)
+            {
+                chunk = chunk._chunkPrevious;
+            }
+
+            // Could get lucky if a trim or similar action has taken place
+            if (chunk._chunkSpans.Length > 0 && chunk._chunkSpans[0].Length == 0)
+            {
+                chunk._chunkSpans[0] = new CharSpan(value, startIndex, length);
+
+                if (chunk._spanIndex == -1)
+                {
+                    chunk._spanIndex = 0;
+                }
+            }
+            else if (chunk._spanIndex + 1 < chunk._chunkSpans.Length)
+            {
+                // Still room in this chunk to shuffle everything down
+                Array.Copy(chunk._chunkSpans, 0, chunk._chunkSpans, 1, chunk._spanIndex + 1);
+                chunk._spanIndex++;
+                chunk._chunkSpans[0] = new CharSpan(value, startIndex, length);
+            }
+            else
+            {
+                // No room left in the first chunk
+                StringSpanBuilder newChunk = new StringSpanBuilder();
+                chunk._chunkPrevious = newChunk;
+                newChunk._chunkSpans[0] = new CharSpan(value, startIndex, length);
+                newChunk._spanIndex = 0;
+            }
 
             // Check for integer overflow
             if (_totalLength + length < _totalLength)

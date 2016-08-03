@@ -84,6 +84,7 @@ namespace Spans.Text.StringSpanBuilder.Tests
             builder.Append("Hello");
 
             Assert.Throws<ArgumentOutOfRangeException>("value", () => builder.Length = -1); // Value < 0
+            Assert.Throws<ArgumentOutOfRangeException>("value", () => builder.Length = 6); // Value > existing value
         }
 
         [Theory]
@@ -124,6 +125,68 @@ namespace Spans.Text.StringSpanBuilder.Tests
 
             Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Append("hello", 5, 1)); // Start index + count > value.Length
             Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Append("hello", 4, 2)); // Start index + count > value.Length
+        }
+
+        [Theory]
+        [InlineData("Hello", "abc", 0, 3, "abcHello")]
+        [InlineData("Hello", "def", 1, 2, "efHello")]
+        [InlineData("Hello", "def", 2, 1, "fHello")]
+        [InlineData("", "g", 0, 1, "g")]
+        [InlineData("Hello", "g", 1, 0, "Hello")]
+        [InlineData("Hello", "g", 0, 0, "Hello")]
+        [InlineData("Hello", "", 0, 0, "Hello")]
+        [InlineData("Hello", null, 0, 0, "Hello")]
+        public static void Prepend_String(string original, string value, int startIndex, int count, string expected)
+        {
+            StringSpanBuilder builder;
+            if (startIndex == 0 && count == (value?.Length ?? 0))
+            {
+                // Use Prepend(string)
+                builder = new StringSpanBuilder(original);
+                builder.Prepend(value);
+                Assert.Equal(expected, builder.ToString());
+            }
+            // Use Prepend(string, int, int)
+            builder = new StringSpanBuilder(original);
+            builder.Prepend(value, startIndex, count);
+            Assert.Equal(expected, builder.ToString());
+        }
+
+        [Fact]
+        public static void Prepend_String_Invalid()
+        {
+            var builder = new StringSpanBuilder(5);
+            builder.Append("Hello");
+
+            Assert.Throws<ArgumentNullException>("value", () => builder.Prepend((string)null, 1, 1)); // Value is null, startIndex > 0 and count > 0
+
+            Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Prepend("", -1, 0)); // Start index < 0
+            Assert.Throws<ArgumentOutOfRangeException>("length", () => builder.Prepend("", 0, -1)); // Count < 0
+
+            Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Prepend("hello", 5, 1)); // Start index + count > value.Length
+            Assert.Throws<ArgumentOutOfRangeException>("startIndex", () => builder.Prepend("hello", 4, 2)); // Start index + count > value.Length
+        }
+
+        [Fact]
+        public static void Prepend_String_FirstBlank()
+        {
+            var builder = new StringSpanBuilder();
+            builder.Append("  ");
+            builder.TrimStart();
+            builder.Prepend("Hello");
+
+            Assert.Equal("Hello", builder.ToString());
+        }
+
+        [Fact]
+        public static void Prepend_String_WithExpand()
+        {
+            var builder = new StringSpanBuilder(1);
+            builder.Append("Hello");
+            builder.Prepend("ABC");
+            builder.Prepend("123");
+
+            Assert.Equal("123ABCHello", builder.ToString());
         }
 
         public static IEnumerable<object[]> AppendFormat_TestData()
