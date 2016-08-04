@@ -604,6 +604,34 @@ namespace Spans.Text.StringSpanBuilder.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => builder.CopyTo(0, destination, 0, count));
         }
 
+        [Theory]
+        [InlineData("Hello", 0, 5, 'H', true)]
+        [InlineData("Hello", 1, 3, 'H', false)]
+        [InlineData("Hello", 1, 3, 'e', true)]
+        [InlineData("Hello", 0, 5, "h", false)]
+        [InlineData("", 0, 0, "h", false)]
+        public static void StartsWith(string s, int startPosition, int length, char value, bool expected)
+        {
+            var builder = new StringSpanBuilder();
+            builder.Append(s, startPosition, length);
+
+            Assert.Equal(expected, builder.StartsWith(value));
+        }
+
+        [Theory]
+        [InlineData("Hello", 0, 5, 'o', true)]
+        [InlineData("Hello", 1, 3, 'o', false)]
+        [InlineData("Hello", 1, 3, 'l', true)]
+        [InlineData("Hello", 0, 5, "O", false)]
+        [InlineData("", 0, 0, "o", false)]
+        public static void EndssWith(string s, int startPosition, int length, char value, bool expected)
+        {
+            var builder = new StringSpanBuilder();
+            builder.Append(s, startPosition, length);
+
+            Assert.Equal(expected, builder.EndsWith(value));
+        }
+
         public class CustomFormatter : ICustomFormatter, IFormatProvider
         {
             public string Format(string format, object arg, IFormatProvider formatProvider) => "abc";

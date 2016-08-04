@@ -759,6 +759,46 @@ namespace Spans.Text.StringSpanBuilder
             return AppendFormatHelper(provider, format, new ParamsArray(args));
         }
 
+        /// <summary>
+        /// Determines whether the beginning of this string matches the specified character.
+        /// </summary>
+        /// <returns>true if <paramref name="value" /> matches the beginning of the string; otherwise, false.</returns>
+        /// <param name="value">The character to compare. </param>
+        public bool StartsWith(char value)
+        {
+            if (Length == 0)
+            {
+                return false;
+            }
+
+            int spanIndex;
+            int charLength;
+
+            var chunk = FindChunkForCharIndex(0, out spanIndex, out charLength);
+
+            return chunk._chunkSpans[spanIndex].StartsWith(value);
+        }
+
+        /// <summary>
+        /// Determines whether the end of this string instance matches the specified character.
+        /// </summary>
+        /// <returns>true if <paramref name="value" /> matches the end of this string; otherwise, false.</returns>
+        /// <param name="value">The character to compare. </param>
+        public bool EndsWith(char value)
+        {
+            if (Length == 0)
+            {
+                return false;
+            }
+
+            int spanIndex;
+            int charLength;
+
+            var chunk = FindChunkForCharIndex(Length - 1, out spanIndex, out charLength);
+
+            return chunk._chunkSpans[spanIndex].EndsWith(value);
+        }
+
         private static void FormatError()
         {
             throw new FormatException(Resources.Strings.Format_InvalidString);
@@ -1204,6 +1244,26 @@ namespace Spans.Text.StringSpanBuilder
 
                 Length = 0;
                 Value = null;
+            }
+
+            public bool StartsWith(char c)
+            {
+                if (Length == 0)
+                {
+                    return false;
+                }
+
+                return Value[StartPosition] == c;
+            }
+
+            public bool EndsWith(char c)
+            {
+                if (Length == 0)
+                {
+                    return false;
+                }
+
+                return Value[StartPosition + Length - 1] == c;
             }
         }
 
