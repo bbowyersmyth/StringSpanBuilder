@@ -327,31 +327,18 @@ namespace Spans.Text.StringSpanBuilder
 
                 while (currentIndex <= chunk._spanIndex)
                 {
-                    var currentSpan = chunk._chunkSpans[currentIndex];
-                    var currentStartPosition = currentSpan.StartPosition;
+                    var startingLength = chunk._chunkSpans[currentIndex].Length;
+                    chunk._chunkSpans[currentIndex].TrimStart();
+                    var newLength = chunk._chunkSpans[currentIndex].Length;
 
-                    while (currentStartPosition < currentSpan.Value.Length)
+                    if (newLength > 0)
                     {
-                        if (!char.IsWhiteSpace(currentSpan.Value[currentStartPosition]))
-                        {
-                            // We have moved the starting position up to the point in the span that is not a whitespace.
-                            // Recalculate length based on the new position.
-                            _totalLength -= (currentStartPosition - currentSpan.StartPosition);
-                            chunk._chunkSpans[currentIndex].Length -= (currentStartPosition - currentSpan.StartPosition);
-                            chunk._chunkSpans[currentIndex].StartPosition = currentStartPosition;
-
-                            if (currentIndex > 0)
-                            {
-                                ClearSpans(chunk._chunkSpans, 0, currentIndex - 1);
-                            }
-
-                            return this;
-                        }
-
-                        currentStartPosition++;
+                        // Found a span that is not a whitespace. Recalculate length.
+                        _totalLength -= (startingLength - newLength);
+                        return this;
                     }
 
-                    _totalLength -= currentSpan.Length;
+                    _totalLength -= startingLength;
                     currentIndex++;
                 }
 
@@ -364,8 +351,7 @@ namespace Spans.Text.StringSpanBuilder
                 else
                 {
                     // We reach here when chunk == this. So there is no previous chunk to disconnect.
-                    // Clear all of our spans as we have trimmed away the entire string.
-                    ClearSpans(chunk._chunkSpans, 0, chunk._spanIndex);
+                    // We have trimmed away the entire string.
                     chunk._spanIndex = -1;
                 }
 
@@ -388,28 +374,18 @@ namespace Spans.Text.StringSpanBuilder
 
                 while (currentIndex > -1)
                 {
-                    var currentSpan = chunk._chunkSpans[currentIndex];
-                    var currentLength = currentSpan.Length;
+                    var startingLength = chunk._chunkSpans[currentIndex].Length;
+                    chunk._chunkSpans[currentIndex].TrimEnd();
+                    var newLength = chunk._chunkSpans[currentIndex].Length;
 
-                    while (currentLength > 0)
+                    if (newLength > 0)
                     {
-                        if (!char.IsWhiteSpace(currentSpan.Value[currentSpan.StartPosition + currentLength - 1]))
-                        {
-                            // We have reduced the length up to the point in the span that is not a whitespace.
-                            _totalLength -= (currentSpan.Length - currentLength);
-                            chunk._chunkSpans[currentIndex].Length = currentLength;
-                            return this;
-                        }
-
-                        currentLength--;
+                        // Found a span that is not a whitespace. Recalculate length.
+                        _totalLength -= (startingLength - newLength);
+                        return this;
                     }
 
-                    _totalLength -= currentSpan.Length;
-
-                    // Entire span is whitespace. Set the length to zero to make it ignored and free the string.
-                    chunk._chunkSpans[currentIndex].Length = 0;
-                    chunk._chunkSpans[currentIndex].Value = null;
-
+                    _totalLength -= startingLength;
                     currentIndex--;
                     chunk._spanIndex = currentIndex;
                 }
@@ -1177,6 +1153,57 @@ namespace Spans.Text.StringSpanBuilder
                 Value = value;
                 StartPosition = startPosition;
                 Length = length;
+            }
+
+            public void TrimStart()
+            {
+                if (Length == 0)
+                {
+                    return;
+                }
+
+                var currentStartPosition = StartPosition;
+
+                while (currentStartPosition < StartPosition + Length)
+                {
+                    if (!char.IsWhiteSpace(Value[currentStartPosition]))
+                    {
+                        // Recalculate length based on the new position.
+                        Length -= (currentStartPosition - StartPosition);
+                        StartPosition = currentStartPosition;
+                        return;
+                    }
+
+                    currentStartPosition++;
+                }
+
+                Length = 0;
+                Value = null;
+            }
+
+            public void TrimEnd()
+            {
+                if (Length == 0)
+                {
+                    return;
+                }
+
+                var currentLength = Length;
+
+                while (currentLength > 0)
+                {
+                    if (!char.IsWhiteSpace(Value[StartPosition + currentLength - 1]))
+                    {
+                        // We have reduced the length up to the point in the span that is not a whitespace.
+                        Length = currentLength;
+                        return;
+                    }
+
+                    currentLength--;
+                }
+
+                Length = 0;
+                Value = null;
             }
         }
 
