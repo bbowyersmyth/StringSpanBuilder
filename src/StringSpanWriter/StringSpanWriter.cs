@@ -15,6 +15,10 @@ namespace Spans.IO.StringSpanWriter
     /// </summary>
     public class StringSpanWriter : TextWriter
     {
+#if NOCOMPLETEDTASK
+        private static readonly Task CompletedTask = Task.FromResult(0);
+#endif
+
         private static volatile UnicodeEncoding _encoding = null;
         private StringSpanBuilder _sb;
         private bool _isOpen;
@@ -331,7 +335,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteAsync(char value)
         {
             Write(value);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>Writes a string asynchronously.</summary>
@@ -341,7 +350,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteAsync(string value)
         {
             Write(value);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -358,7 +372,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteAsync(char[] buffer, int index, int count)
         {
             Write(buffer, index, count);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -370,7 +389,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteLineAsync(char value)
         {
             WriteLine(value);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -382,7 +406,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteLineAsync(String value)
         {
             WriteLine(value);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -399,7 +428,12 @@ namespace Spans.IO.StringSpanWriter
         public override Task WriteLineAsync(char[] buffer, int index, int count)
         {
             WriteLine(buffer, index, count);
+
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
@@ -408,7 +442,11 @@ namespace Spans.IO.StringSpanWriter
         /// <returns>A task that represents the asynchronous flush operation.</returns>
         public override Task FlushAsync()
         {
+#if NOCOMPLETEDTASK
+            return CompletedTask;
+#else
             return Task.CompletedTask;
+#endif
         }
 
         /// <summary>
