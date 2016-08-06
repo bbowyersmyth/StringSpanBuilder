@@ -1,14 +1,14 @@
 {
   "version": "0.1.0-*",
   "authors": [ "Bruce Bowyer-Smyth" ],
-  "description": "A string writer that uses StringSpanBuilder.",
+  "description": "A string writer that uses StringSpanBuilder as its backing store.",
   "packOptions": {
     "copyright": "Copyright Bruce Bowyer-Smyth",
     "owners": [ "Bruce Bowyer-Smyth" ],
     "licenseUrl": "https://github.com/bbowyersmyth/StringSpanBuilder/blob/master/LICENSE.txt",
     "projectUrl": "https://github.com/bbowyersmyth/StringSpanBuilder",
     "requireLicenseAcceptance": false,
-    "summary": "A string writer that uses StringSpanBuilder"
+    "summary": "A string writer that uses StringSpanBuilder as its backing store"
   },
   "dependencies": {
     "StringSpanBuilder": "0.1.0-*"

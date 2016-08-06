@@ -1,14 +1,14 @@
 ﻿{
   "version": "0.1.0-*",
   "authors": [ "Bruce Bowyer-Smyth" ],
-  "description": "A string builder that preserves the strings appended to it.",
+  "description": "A string builder that preserves the strings appended to it for lower allocations and performance.",
   "packOptions": {
     "copyright": "Copyright Bruce Bowyer-Smyth",
     "owners": [ "Bruce Bowyer-Smyth" ],
     "licenseUrl": "https://github.com/bbowyersmyth/StringSpanBuilder/blob/master/LICENSE.txt",
     "projectUrl": "https://github.com/bbowyersmyth/StringSpanBuilder",
     "requireLicenseAcceptance": false,
-    "summary": "A string preserving builder"
+    "summary": "A string builder that preserves the strings appended to it for lower allocations and performance"
   },
   "buildOptions": {
     "allowUnsafe": true,
