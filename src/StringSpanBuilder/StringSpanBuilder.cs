@@ -456,87 +456,88 @@ namespace Spans.Text.StringSpanBuilder
                 return;
             }
 
-            StringSpanBuilder chunk = this;
+            StringSpanBuilder lastProcessed = null;
+            StringSpanBuilder chunk;
             int sourceEndIndex = sourceIndex + count;
-            int sourceStartIndex = sourceIndex;
-            int readOffset = Length;
-            int writeOffset = destinationIndex + count;
-            long arrayLengthInBytes = (long)destination.Length * sizeof(char);
+            int readOffset = 0;
 
             unsafe
             {
                 fixed (char* destinationPtr = destination)
                 {
+                    char* destinationWritePtr = destinationPtr + destinationIndex;
+                    char* destinationEndPtr = destinationWritePtr + count;
+
                     do
                     {
-                        int currentIndex = chunk._spanIndex;
+                        chunk = this;
+                        while (chunk._chunkPrevious != lastProcessed)
+                        {
+                            chunk = chunk._chunkPrevious;
+                        }
 
-                        while (currentIndex > -1)
+                        int currentIndex = 0;
+
+                        while (currentIndex <= chunk._spanIndex)
                         {
                             var currentSpan = chunk._chunkSpans[currentIndex];
 
-                            if (currentSpan.Length > 0 && readOffset - currentSpan.Length < sourceEndIndex)
+                            if (currentSpan.Length > 0 && readOffset + currentSpan.Length > sourceIndex)
                             {
-                                int readPos = currentSpan.StartPosition;
-                                int readLength = currentSpan.Length;
+                                int spanReadPos = currentSpan.StartPosition;
+                                int spanReadLength = currentSpan.Length;
 
-                                if (readOffset > sourceEndIndex)
+                                if (readOffset < sourceIndex)
                                 {
-                                    readLength -= (readOffset - sourceEndIndex);
+                                    int startDelta = sourceIndex - readOffset;
+                                    spanReadPos += startDelta;
+                                    spanReadLength -= startDelta;
                                 }
 
-                                if (readOffset - readLength < sourceStartIndex)
+                                if (readOffset + spanReadLength > sourceEndIndex)
                                 {
-                                    int startDiff = sourceStartIndex - (readOffset - readLength);
-                                    readPos += startDiff;
-                                    readLength -= startDiff;
+                                    spanReadLength = (sourceEndIndex - readOffset);
                                 }
 
-                                writeOffset -= readLength;
-                                readOffset -= currentSpan.Length;
-
-                                if (writeOffset < destinationIndex ||
-                                    writeOffset > destinationIndex + count ||
-                                    readPos < 0 ||
-                                    readPos + readLength > currentSpan.Value.Length)
+                                if (spanReadPos < 0 ||
+                                    spanReadPos + spanReadLength > currentSpan.Value.Length)
                                 {
                                     // There has been an error calculating lengths at some point.
-                                    // Bail to avoid a buffer overrun write.
-                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
+                                    // Bail to avoid a buffer overrun read.
+                                    throw new ArgumentOutOfRangeException("writeOffset");
                                 }
 
                                 fixed (char* sourcePtr = currentSpan.Value)
                                 {
 #if NOMEMORYCOPY
                                     BufferCompat.MemoryCopy(
-                                        sourcePtr + readPos,
-                                        destinationPtr + writeOffset,
-                                        arrayLengthInBytes - (writeOffset * sizeof(char)),
-                                        (long)readLength * sizeof(char));
+                                        sourcePtr + spanReadPos,
+                                        destinationWritePtr,
+                                        (byte*)destinationEndPtr - (byte*)destinationWritePtr,
+                                        (long)spanReadLength * sizeof(char));
 #else
                                     Buffer.MemoryCopy(
-                                        sourcePtr + readPos,
-                                        destinationPtr + writeOffset,
-                                        arrayLengthInBytes - (writeOffset * sizeof(char)),
-                                        (long)readLength * sizeof(char));
+                                        sourcePtr + spanReadPos,
+                                        destinationWritePtr,
+                                        (byte*)destinationEndPtr - (byte*)destinationWritePtr,
+                                        (long)spanReadLength * sizeof(char));
 #endif //NOMEMORYCOPY
                                 }
-                            }
-                            else
-                            {
-                                readOffset -= currentSpan.Length;
+
+                                destinationWritePtr += spanReadLength;
+
+                                if (destinationWritePtr >= destinationEndPtr)
+                                {
+                                    return;
+                                }
                             }
 
-                            currentIndex--;
+                            readOffset += currentSpan.Length;
+                            currentIndex++;
                         }
 
-                        if (writeOffset <= destinationIndex)
-                        {
-                            break;
-                        }
-
-                        chunk = chunk._chunkPrevious;
-                    } while (chunk != null);
+                        lastProcessed = chunk;
+                    } while (chunk != this);
                 }
             }
         }
@@ -555,19 +556,27 @@ namespace Spans.Text.StringSpanBuilder
             }
 
             string ret = new string('\0', lengthLocal);
-            StringSpanBuilder chunk = this;
-            int writeOffset = lengthLocal;
-            long stringLengthInBytes = (long)lengthLocal * sizeof(char);
+            StringSpanBuilder lastProcessed = null;
+            StringSpanBuilder chunk;
 
             unsafe
             {
                 fixed (char* destinationPtr = ret)
                 {
+                    char* destinationWritePtr = destinationPtr;
+                    char* destinationEndPtr = destinationPtr + lengthLocal;
+
                     do
                     {
-                        int currentIndex = chunk._spanIndex;
+                        chunk = this;
+                        while (chunk._chunkPrevious != lastProcessed)
+                        {
+                            chunk = chunk._chunkPrevious;
+                        }
 
-                        while (currentIndex > -1)
+                        int currentIndex = 0;
+
+                        while (currentIndex <= chunk._spanIndex)
                         {
                             var currentSpan = chunk._chunkSpans[currentIndex];
 
@@ -575,29 +584,25 @@ namespace Spans.Text.StringSpanBuilder
                             {
                                 // Perf: Delimiters are often added as single char strings. Avoid the memory copy and
                                 //       just assign directly.
-                                writeOffset--;
 
-                                if (writeOffset < 0)
+                                if (destinationWritePtr >= destinationEndPtr)
                                 {
                                     // There has been an error calculating lengths at some point.
                                     // Bail to avoid a buffer overrun write.
-                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
+                                    throw new ArgumentOutOfRangeException("writeOffset");
                                 }
 
-                                *(destinationPtr + writeOffset) = currentSpan.Value[currentSpan.StartPosition];
+                                *destinationWritePtr = currentSpan.Value[currentSpan.StartPosition];
+                                destinationWritePtr++;
                             }
                             else if (currentSpan.Length > 0)
                             {
-                                writeOffset -= currentSpan.Length;
-
-                                if (writeOffset < 0 ||
-                                    writeOffset >= lengthLocal ||
-                                    currentSpan.StartPosition < 0 ||
+                                if (currentSpan.StartPosition < 0 ||
                                     currentSpan.StartPosition + currentSpan.Length > currentSpan.Value.Length)
                                 {
                                     // There has been an error calculating lengths at some point.
-                                    // Bail to avoid a buffer overrun write.
-                                    throw new ArgumentOutOfRangeException(nameof(writeOffset));
+                                    // Bail to avoid a buffer overrun read.
+                                    throw new ArgumentOutOfRangeException("writeOffset");
                                 }
 
                                 fixed (char* sourcePtr = currentSpan.Value)
@@ -605,24 +610,26 @@ namespace Spans.Text.StringSpanBuilder
 #if NOMEMORYCOPY
                                     BufferCompat.MemoryCopy(
                                         sourcePtr + currentSpan.StartPosition,
-                                        destinationPtr + writeOffset,
-                                        stringLengthInBytes - (writeOffset * sizeof(char)),
+                                        destinationWritePtr,
+                                        (byte*)destinationEndPtr - (byte*)destinationWritePtr,
                                         (long)currentSpan.Length * sizeof(char));
 #else
                                     Buffer.MemoryCopy(
                                         sourcePtr + currentSpan.StartPosition,
-                                        destinationPtr + writeOffset,
-                                        stringLengthInBytes - (writeOffset * sizeof(char)),
+                                        destinationWritePtr,
+                                        (byte*)destinationEndPtr - (byte*)destinationWritePtr,
                                         (long)currentSpan.Length * sizeof(char));
 #endif //NOMEMORYCOPY
                                 }
+
+                                destinationWritePtr += currentSpan.Length;
                             }
 
-                            currentIndex--;
+                            currentIndex++;
                         }
 
-                        chunk = chunk._chunkPrevious;
-                    } while (chunk != null);
+                        lastProcessed = chunk;
+                    } while (chunk != this);
 
                     return ret;
                 }
