@@ -9,6 +9,16 @@ namespace Spans.Text.StringSpanBuilder
 #if NOMEMORYCOPY
     internal static class BufferCompat
     {
+        internal static unsafe void MemoryCopy(void* source, void* destination, long destinationSizeInBytes, long sourceBytesToCopy)
+        {
+            if (sourceBytesToCopy > destinationSizeInBytes)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceBytesToCopy));
+            }
+
+            Memmove((byte*)destination, (byte*)source, checked((uint)sourceBytesToCopy));
+        }
+
         internal unsafe static void Memmove(byte* dest, byte* src, uint len)
         {
             switch (len)

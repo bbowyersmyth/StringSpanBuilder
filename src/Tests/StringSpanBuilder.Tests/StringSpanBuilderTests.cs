@@ -624,7 +624,7 @@ namespace Spans.Text.StringSpanBuilder.Tests
         [InlineData("Hello", 1, 3, 'l', true)]
         [InlineData("Hello", 0, 5, "O", false)]
         [InlineData("", 0, 0, "o", false)]
-        public static void EndssWith(string s, int startPosition, int length, char value, bool expected)
+        public static void EndsWith(string s, int startPosition, int length, char value, bool expected)
         {
             var builder = new StringSpanBuilder();
             builder.Append(s, startPosition, length);

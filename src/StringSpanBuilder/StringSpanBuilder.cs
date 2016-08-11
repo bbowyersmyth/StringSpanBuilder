@@ -150,7 +150,7 @@ namespace Spans.Text.StringSpanBuilder
         /// <exception cref="T:System.OutOfMemoryException">Enlarging the value of this instance would exceed the length allowed for a string.</exception>
         public StringSpanBuilder Append(string value)
         {
-            if (value != null && value.Length > 0)
+            if (value?.Length > 0)
             {
                 AppendHelper(value, 0, value.Length);
             }
@@ -508,10 +508,11 @@ namespace Spans.Text.StringSpanBuilder
                                 fixed (char* sourcePtr = currentSpan.Value)
                                 {
 #if NOMEMORYCOPY
-                                    BufferCompat.Memmove(
-                                           (byte*)(destinationPtr + writeOffset),
-                                           (byte*)(sourcePtr + readPos),
-                                           (uint)readLength * sizeof(char));
+                                    BufferCompat.MemoryCopy(
+                                        sourcePtr + readPos,
+                                        destinationPtr + writeOffset,
+                                        arrayLengthInBytes - (writeOffset * sizeof(char)),
+                                        (long)readLength * sizeof(char));
 #else
                                     Buffer.MemoryCopy(
                                         sourcePtr + readPos,
@@ -602,10 +603,11 @@ namespace Spans.Text.StringSpanBuilder
                                 fixed (char* sourcePtr = currentSpan.Value)
                                 {
 #if NOMEMORYCOPY
-                                    BufferCompat.Memmove(
-                                           (byte*)(destinationPtr + writeOffset),
-                                           (byte*)(sourcePtr + currentSpan.StartPosition),
-                                           (uint)currentSpan.Length * sizeof(char));
+                                    BufferCompat.MemoryCopy(
+                                        sourcePtr + currentSpan.StartPosition,
+                                        destinationPtr + writeOffset,
+                                        stringLengthInBytes - (writeOffset * sizeof(char)),
+                                        (long)currentSpan.Length * sizeof(char));
 #else
                                     Buffer.MemoryCopy(
                                         sourcePtr + currentSpan.StartPosition,
