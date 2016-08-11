@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0-*",
+  "version": "0.1.1-*",
   "authors": [ "Bruce Bowyer-Smyth" ],
   "description": "A string writer that uses StringSpanBuilder as its backing store.",
   "packOptions": {
@@ -11,7 +11,7 @@
     "summary": "A string writer that uses StringSpanBuilder as its backing store"
   },
   "dependencies": {
-    "StringSpanBuilder": "0.1.0-*"
+    "StringSpanBuilder": "0.1.1-*"
   },
   "buildOptions": {
     "xmlDoc": true,
